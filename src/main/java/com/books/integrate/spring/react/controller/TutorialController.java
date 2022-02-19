@@ -28,7 +28,7 @@ public class TutorialController {
 	@Autowired
 	TutorialRepository tutorialRepository;
 
-	@GetMapping("/tutorials")
+	@GetMapping("/tutorials/all")
 	public ResponseEntity<List<Tutorial>> getAllTutorials(@RequestParam(required = false) String title) {
 		try {
 			List<Tutorial> tutorials = new ArrayList<Tutorial>();
@@ -36,7 +36,7 @@ public class TutorialController {
 			if (title == null)
 				tutorialRepository.findAll().forEach(tutorials::add);
 			else
-				tutorialRepository.findByTitleContaining(title).forEach(tutorials::add);
+				tutorialRepository.findByTitle(title).forEach(tutorials::add);
 
 			if (tutorials.isEmpty()) {
 				return new ResponseEntity<>(HttpStatus.NO_CONTENT);
@@ -48,7 +48,7 @@ public class TutorialController {
 		}
 	}
 
-	@GetMapping("/tutorials/{id}")
+	@GetMapping("/tutorials/getById/{id}")
 	public ResponseEntity<Tutorial> getTutorialById(@PathVariable("id") long id) {
 		Optional<Tutorial> tutorialData = tutorialRepository.findById(id);
 
@@ -60,7 +60,7 @@ public class TutorialController {
 	}
 
 
-	@PostMapping("/tutorials")
+	@PostMapping("/tutorials/createTutorial")
 	public ResponseEntity<Tutorial> createTutorial(@RequestBody Tutorial tutorial) {
 		try {
 			Tutorial _tutorial = tutorialRepository
@@ -71,7 +71,7 @@ public class TutorialController {
 		}
 	}
 
-	@PutMapping("/tutorials/{id}")
+	@PutMapping("/tutorials/actualizarById/{id}")
 	public ResponseEntity<Tutorial> updateTutorial(@PathVariable("id") long id, @RequestBody Tutorial tutorial) {
 		Optional<Tutorial> tutorialData = tutorialRepository.findById(id);
 
@@ -86,8 +86,27 @@ public class TutorialController {
 		}
 	}
 
+	//Nuevo, actualizar tutorial por título
+	@PutMapping("/tutorials/actualizarByTitulo/{title}")
+	public ResponseEntity<Tutorial> updateTutorialByTitle(@PathVariable("title") String title, @RequestBody Tutorial tutorial) {
+		List<Tutorial> tutorialData = tutorialRepository.findByTitle(title);
+
+		if (!(tutorialData.isEmpty())) {
+			//Tutorial _tutorial = tutorialData.get();
+			tutorialData.stream().forEach((_tutorial -> {				
+				_tutorial.setTitle(tutorial.getTitle());
+				_tutorial.setDescription(tutorial.getDescription());
+				_tutorial.setPublished(tutorial.isPublished());
+				tutorialRepository.save(_tutorial);			
+			}));
+			return new ResponseEntity<>(HttpStatus.OK);			
+		} else {
+			return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+		}
+	}
+
 //HttpStatus
-	@DeleteMapping("/tutorials/{id}")
+	@DeleteMapping("/tutorials/eliminarById/{id}")
 	public ResponseEntity<String> deleteTutorial(@PathVariable("id") long id) {
 		try {
 			tutorialRepository.deleteById(id);
@@ -97,11 +116,29 @@ public class TutorialController {
 		}
 	}
 
-	@DeleteMapping("/tutorials")
+	@DeleteMapping("/tutorials/deleteAll")
 	public ResponseEntity<HttpStatus> deleteAllTutorials() {
 		try {
 			tutorialRepository.deleteAll();
 			return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+		} catch (Exception e) {
+			return new ResponseEntity<>(HttpStatus.EXPECTATION_FAILED);
+		}
+
+	}
+	//Nuevo, delete mapping por título
+	@DeleteMapping("/deleteByTitle/{title}")
+	public ResponseEntity<HttpStatus> deleteByTitle(@PathVariable("title") String title) {
+		try {
+			List<Tutorial> t = tutorialRepository.findByTitle(title);
+			if(!(t.isEmpty())){
+				t.stream().forEach((tutorial -> {
+					tutorialRepository.deleteById(tutorial.getId());
+				}));				
+				return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+			}else{
+				return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+			}		
 		} catch (Exception e) {
 			return new ResponseEntity<>(HttpStatus.EXPECTATION_FAILED);
 		}
