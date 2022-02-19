@@ -4,7 +4,6 @@ import java.util.*;
 
 import com.books.integrate.spring.react.model.Tutorial;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpMessage;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
@@ -58,13 +57,18 @@ public class TutorialController {
 			return new ResponseEntity<>(HttpStatus.NOT_FOUND);
 		}
 	}
+	//Nuevo, consulta por precio
+	@GetMapping("tutorials/queryPrecio")
+    public List<Tutorial> obtenerUsuarioPorPrioridad(@RequestParam("price") double price){
+        return tutorialRepository.findByPrice(price);
+    }
 
 
 	@PostMapping("/tutorials/createTutorial")
 	public ResponseEntity<Tutorial> createTutorial(@RequestBody Tutorial tutorial) {
 		try {
 			Tutorial _tutorial = tutorialRepository
-					.save(new Tutorial(tutorial.getTitle(), tutorial.getDescription(),  false));
+					.save(new Tutorial(tutorial.getTitle(), tutorial.getDescription(),  false, tutorial.getPrice()));
 			return new ResponseEntity<>(_tutorial, HttpStatus.CREATED);
 		} catch (Exception e) {
 			return new ResponseEntity<>(null, HttpStatus.EXPECTATION_FAILED);
@@ -127,7 +131,7 @@ public class TutorialController {
 
 	}
 	//Nuevo, delete mapping por título
-	@DeleteMapping("/deleteByTitle/{title}")
+	@DeleteMapping("tutorials/deleteByTitle/{title}")
 	public ResponseEntity<HttpStatus> deleteByTitle(@PathVariable("title") String title) {
 		try {
 			List<Tutorial> t = tutorialRepository.findByTitle(title);
